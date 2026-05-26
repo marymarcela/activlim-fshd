@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACTIVLIM — Calculadora Clínica FSHD</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #ffffff;
+    --bg2:       #f7f7f5;
+    --bg3:       #f0efe9;
+    --text:      #1a1a18;
+    --text2:     #5a5a56;
+    --text3:     #9a9a94;
+    --border:    #e0dfd8;
+    --border2:   #c8c7c0;
+    --blue-bg:   #e6f1fb;
+    --blue-text: #0c447c;
+    --blue-bdr:  #378add;
+    --green-bg:  #eaf3de;
+    --green-txt: #27500a;
+    --green-bdr: #639922;
+    --amber-bg:  #faeeda;
+    --amber-txt: #633806;
+    --amber-bdr: #ef9f27;
+    --red-bg:    #fcebeb;
+    --red-txt:   #a32d2d;
+    --radius:    8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #1e1e1c;
+      --bg2:       #282824;
+      --bg3:       #323230;
+      --text:      #f0efe9;
+      --text2:     #b0b0a8;
+      --text3:     #707068;
+      --border:    #3a3a36;
+      --border2:   #505048;
+      --blue-bg:   #0c2a4a;
+      --blue-text: #85b7eb;
+      --blue-bdr:  #185fa5;
+      --green-bg:  #17340a;
+      --green-txt: #c0dd97;
+      --green-bdr: #3b6d11;
+      --amber-bg:  #2a1a04;
+      --amber-txt: #fac775;
+      --amber-bdr: #854f0b;
+      --red-bg:    #2a0c0c;
+      --red-txt:   #f09595;
+      --red-bdr:   #a32d2d;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .header {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header-title h1 { font-size: 20px; font-weight: 500; color: var(--text); }
+  .header-title p  { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .badge {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 20px; background: var(--blue-bg);
+    color: var(--blue-text); border: 0.5px solid var(--blue-bdr);
+    white-space: nowrap; align-self: flex-start;
+  }
+
+  /* ── Patient fields ── */
+  .patient-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 480px) { .patient-grid { grid-template-columns: 1fr 1fr; } }
+  .patient-grid input {
+    width: 100%; font-size: 13px; padding: 7px 10px;
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    background: var(--bg); color: var(--text);
+    transition: border-color .15s;
+  }
+  .patient-grid input::placeholder { color: var(--text3); }
+  .patient-grid input:focus { outline: none; border-color: var(--blue-bdr); }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px; font-weight: 500; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--text2);
+    padding: 6px 14px; background: var(--bg2);
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  /* ── Item rows ── */
+  .item-row {
+    display: grid;
+    grid-template-columns: 30px 1fr auto;
+    align-items: center;
+    gap: 0;
+    border-bottom: 0.5px solid var(--border);
+    min-height: 40px;
+    transition: background .1s;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row.fshd { background: var(--amber-bg); }
+  .item-row:hover { background: var(--bg2); }
+  .item-row.fshd:hover { background: var(--amber-bg); filter: brightness(.97); }
+
+  .item-num {
+    font-size: 12px; font-weight: 500; color: var(--text3);
+    text-align: center; padding: 0 4px;
+  }
+  .item-row.fshd .item-num { color: var(--amber-txt); }
+
+  .item-text {
+    font-size: 13px; color: var(--text);
+    padding: 8px 8px 8px 4px; line-height: 1.4;
+  }
+  .item-text .star { font-size: 10px; color: var(--amber-bdr); margin-left: 4px; }
+
+  .btn-group {
+    display: flex; gap: 4px;
+    padding: 0 10px 0 6px;
+  }
+  .opt {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    background: var(--bg);
+    cursor: pointer; font-size: 12px; font-weight: 500;
+    color: var(--text2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all .12s; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .opt:hover { border-color: var(--text2); background: var(--bg2); }
+  .opt.s0 { background: var(--red-bg); border-color: var(--red-bdr); color: var(--red-txt); }
+  .opt.s1 { background: var(--amber-bg); border-color: var(--amber-bdr); color: var(--amber-txt); }
+  .opt.s2 { background: var(--green-bg); border-color: var(--green-bdr); color: var(--green-txt); }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    padding: 8px 14px;
+    background: var(--bg2);
+    border-top: 0.5px solid var(--border);
+    font-size: 12px; color: var(--text2);
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1.5px solid; display: inline-block; flex-shrink: 0;
+    font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── Result panel ── */
+  .result-panel {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .result-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+  }
+  .result-cell {
+    padding: .85rem 1rem; text-align: center;
+    border-right: 0.5px solid var(--border);
+  }
+  .result-cell:last-child { border-right: none; }
+  .result-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); margin-bottom: 4px; }
+  .result-val { font-size: 24px; font-weight: 500; color: var(--text); }
+  .result-val.pos { color: var(--green-txt); }
+  .result-val.neg { color: var(--red-txt); }
+
+  .interp-bar {
+    padding: .65rem 1rem; font-size: 13px; font-weight: 500;
+    text-align: center; border-top: 0.5px solid var(--border);
+  }
+  .i-nc         { background: var(--bg2); color: var(--text2); }
+  .i-muy-severa { background: var(--red-bg); color: var(--red-txt); }
+  .i-severa     { background: var(--red-bg); color: var(--red-txt); }
+  .i-mod-severa { background: var(--amber-bg); color: var(--amber-txt); }
+  .i-moderada   { background: var(--amber-bg); color: var(--amber-txt); }
+  .i-leve       { background: var(--green-bg); color: var(--green-txt); }
+  .i-minima     { background: var(--green-bg); color: var(--green-txt); }
+  .i-sin        { background: var(--blue-bg); color: var(--blue-text); }
+
+  .progress-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: .5rem 1rem; border-top: 0.5px solid var(--border);
+  }
+  .track { flex: 1; height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .fill  { height: 100%; background: var(--green-bdr); border-radius: 4px; transition: width .2s; }
+  .pct-txt { font-size: 12px; color: var(--text2); white-space: nowrap; min-width: 30px; text-align: right; }
+
+  /* ── FSHD breakdown ── */
+  .fshd-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .5rem 1rem; border-top: 0.5px solid var(--border);
+    font-size: 12px; color: var(--text2);
+  }
+  .fshd-score { font-weight: 500; color: var(--text); }
+
+  /* ── Actions ── */
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .btn {
+    padding: 8px 16px; border: 0.5px solid var(--border2);
+    border-radius: var(--radius); background: var(--bg);
+    cursor: pointer; font-size: 13px; color: var(--text);
+    transition: background .12s, transform .08s;
+  }
+  .btn:hover { background: var(--bg2); }
+  .btn:active { transform: scale(.98); }
+  .btn-print {
+    background: var(--blue-bg); border-color: var(--blue-bdr);
+    color: var(--blue-text); font-weight: 500;
+  }
+  .btn-print:hover { filter: brightness(.95); }
+
+  /* ── Print ── */
+  @media print {
+    body { background: white; padding: .5rem; }
+    .actions { display: none; }
+    .opt:not(.s0):not(.s1):not(.s2) { opacity: .3; }
+    .result-panel { page-break-inside: avoid; }
+  }
+
+  /* ── Conversion table (collapsible) ── */
+  .conv-toggle {
+    width: 100%; text-align: left; padding: .75rem 1rem;
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; font-size: 13px;
+    color: var(--text2); margin-bottom: .5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .conv-toggle:hover { background: var(--bg3); }
+  .conv-table-wrap { display: none; margin-bottom: 1rem; }
+  .conv-table-wrap.open { display: block; }
+  .conv-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .conv-table th {
+    background: var(--bg2); padding: 5px 8px;
+    text-align: center; font-weight: 500; color: var(--text2);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .conv-table td {
+    padding: 4px 8px; text-align: center;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .conv-table tr:last-child td { border-bottom: none; }
+  .td-int { text-align: left; font-size: 11px; }
+  .conv-table tr.hl td { background: var(--blue-bg); color: var(--blue-text); font-weight: 500; }
+
+  /* ── Footer ── */
+  .footer {
+    font-size: 11px; color: var(--text3); text-align: center;
+    padding-top: .5rem; border-top: 0.5px solid var(--border);
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <h1>ACTIVLIM — Calculadora clínica</h1>
+      <p>22 ítems · Modelo de Rasch · Vandervelde et al. 2007 · Enfermedades neuromusculares</p>
+    </div>
+    <span class="badge">FSHD · Consulta</span>
+  </div>
+
+  <!-- Patient -->
+  <div class="patient-grid">
+    <input id="pNombre" placeholder="Nombre del paciente" autocomplete="off">
+    <input id="pFecha"  placeholder="Fecha (dd/mm/aaaa)" autocomplete="off">
+    <input id="pHC"     placeholder="N.º historia clínica" autocomplete="off">
+  </div>
+
+  <!-- Items -->
+  <div class="card" id="items-card"></div>
+
+  <!-- Result -->
+  <div class="result-panel">
+    <div class="result-grid">
+      <div class="result-cell">
+        <div class="result-lbl">Ítems respondidos</div>
+        <div class="result-val" id="r-count">0 / 22</div>
+      </div>
+      <div class="result-cell">
+        <div class="result-lbl">Suma raw</div>
+        <div class="result-val" id="r-raw">—</div>
+      </div>
+      <div class="result-cell">
+        <div class="result-lbl">Logit score</div>
+        <div class="result-val" id="r-logit">—</div>
+      </div>
+    </div>
+    <div id="r-interp" class="interp-bar i-nc">Complete al menos 18 ítems para obtener el resultado</div>
+    <div class="fshd-row">
+      <span>★ Ítems FSHD-sensibles respondidos: <span id="r-fshd" class="fshd-score">—</span></span>
+      <span id="r-fshd-sum" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <div class="progress-row">
+      <div class="track"><div class="fill" id="r-fill" style="width:0%"></div></div>
+      <div class="pct-txt" id="r-pct">0%</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn" onclick="resetAll()">↺ Limpiar</button>
+    <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / Guardar PDF</button>
+  </div>
+
+  <!-- Conversion table toggle -->
+  <button class="conv-toggle" onclick="toggleConv(this)">
+    <span>Tabla de conversión Rasch (suma → logit score)</span>
+    <span id="conv-arrow">▼</span>
+  </button>
+  <div class="conv-table-wrap" id="conv-wrap">
+    <table class="conv-table" id="conv-tbl"></table>
+  </div>
+
+  <div class="footer">
+    Vandervelde L, et al. (2007). ACTIVLIM: a Rasch-built measure of activity limitations in children and adults with neuromuscular disorders.
+    <em>Neuromuscular Disorders</em>, 17(6):459-469. &nbsp;·&nbsp; rehab-scales.org
+    <br>Herramienta de uso clínico. No reemplaza el juicio del especialista.
+  </div>
+
+</div>
+
+<script>
+const ITEMS = [
+  {n:1,  cat:"MMII — Movilidad",         text:"Girarse en la cama",                                        fshd:false},
+  {n:2,  cat:"MMII — Movilidad",         text:"Levantarse de la cama",                                     fshd:false},
+  {n:3,  cat:"MMII — Movilidad",         text:"Sentarse en el suelo",                                      fshd:false},
+  {n:4,  cat:"MMII — Movilidad",         text:"Levantarse del suelo",                                      fshd:false},
+  {n:5,  cat:"MMII — Movilidad",         text:"Ponerse de pie desde una silla",                            fshd:false},
+  {n:6,  cat:"MMII — Movilidad",         text:"Subir escaleras",                                           fshd:false},
+  {n:7,  cat:"MMII — Movilidad",         text:"Bajar escaleras",                                           fshd:false},
+  {n:8,  cat:"MMII — Movilidad",         text:"Caminar 500 metros",                                        fshd:false},
+  {n:9,  cat:"MMII — Movilidad",         text:"Correr",                                                    fshd:false},
+  {n:10, cat:"MMSS — Mano / muñeca",     text:"Escribir con bolígrafo",                                    fshd:false},
+  {n:11, cat:"MMSS — Mano / muñeca",     text:"Usar el teclado del ordenador / computadora",               fshd:false},
+  {n:12, cat:"MMSS — Mano / muñeca",     text:"Abrir una botella",                                         fshd:false},
+  {n:13, cat:"MMSS — Mano / muñeca",     text:"Cortar la comida con cuchillo",                             fshd:false},
+  {n:14, cat:"MMSS — Carga / elevación", text:"Llevar una bolsa pesada (≥ 2 kg)",                          fshd:true},
+  {n:15, cat:"MMSS — Carga / elevación", text:"Peinarse el cabello",                                       fshd:true},
+  {n:16, cat:"MMSS — Vestido / higiene", text:"Ponerse la ropa de la parte superior del cuerpo",           fshd:true},
+  {n:17, cat:"MMSS — Vestido / higiene", text:"Abrocharse un botón",                                       fshd:false},
+  {n:18, cat:"MMSS — Vestido / higiene", text:"Lavarse los dientes",                                       fshd:false},
+  {n:19, cat:"MMSS — Vestido / higiene", text:"Lavarse la espalda",                                        fshd:true},
+  {n:20, cat:"MMSS — Vestido / higiene", text:"Lavar los platos",                                          fshd:false},
+  {n:21, cat:"MMSS — Carga / elevación", text:"Colgar ropa en el tendedero",                               fshd:true},
+  {n:22, cat:"MMSS — Carga / elevación", text:"Poner objetos en un estante alto (sobre la cabeza)",        fshd:true},
+];
+
+const CONV = [
+  [-6.19,"Limitación muy severa"],[-4.74,"Limitación muy severa"],[-3.96,"Limitación severa"],
+  [-3.41,"Limitación severa"],[-2.98,"Limitación severa"],[-2.61,"Limitación severa"],
+  [-2.28,"Limitación moderada-severa"],[-1.97,"Limitación moderada-severa"],[-1.69,"Limitación moderada-severa"],
+  [-1.42,"Limitación moderada-severa"],[-1.16,"Limitación moderada"],[-0.91,"Limitación moderada"],
+  [-0.67,"Limitación moderada"],[-0.43,"Limitación moderada"],[-0.19,"Limitación leve-moderada"],
+  [0.05,"Limitación leve-moderada"],[0.29,"Limitación leve"],[0.53,"Limitación leve"],
+  [0.77,"Limitación leve"],[1.02,"Limitación leve"],[1.27,"Limitación mínima"],
+  [1.53,"Limitación mínima"],[1.80,"Limitación mínima"],[2.09,"Sin limitación significativa"],
+  [2.39,"Sin limitación significativa"],[2.71,"Sin limitación significativa"],[3.06,"Sin limitación significativa"],
+  [3.45,"Sin limitación significativa"],[3.89,"Sin limitación significativa"],[4.42,"Sin limitación significativa"],
+  [5.13,"Sin limitación significativa"],[6.19,"Sin limitación significativa"]
+];
+
+const ICLASS = {
+  "Limitación muy severa":"i-muy-severa","Limitación severa":"i-severa",
+  "Limitación moderada-severa":"i-mod-severa","Limitación moderada":"i-moderada",
+  "Limitación leve-moderada":"i-leve","Limitación leve":"i-leve",
+  "Limitación mínima":"i-minima","Sin limitación significativa":"i-sin"
+};
+
+const ans = {};
+
+function buildItems() {
+  const card = document.getElementById('items-card');
+  let prevCat = '';
+  ITEMS.forEach(item => {
+    if (item.cat !== prevCat) {
+      const lbl = document.createElement('div');
+      lbl.className = 'section-label';
+      lbl.textContent = item.cat;
+      card.appendChild(lbl);
+      prevCat = item.cat;
+    }
+    const row = document.createElement('div');
+    row.className = 'item-row' + (item.fshd ? ' fshd' : '');
+    row.innerHTML =
+      `<div class="item-num">${item.n}</div>` +
+      `<div class="item-text">${item.text}${item.fshd ? '<span class="star" aria-hidden="true">★</span>' : ''}</div>` +
+      `<div class="btn-group">` +
+        `<button class="opt" data-n="${item.n}" data-v="0" title="Imposible" aria-label="Ítem ${item.n}: Imposible">0</button>` +
+        `<button class="opt" data-n="${item.n}" data-v="1" title="Difícil"   aria-label="Ítem ${item.n}: Difícil">1</button>` +
+        `<button class="opt" data-n="${item.n}" data-v="2" title="Fácil"     aria-label="Ítem ${item.n}: Fácil">2</button>` +
+      `</div>`;
+    card.appendChild(row);
+  });
+
+  // Legend
+  const leg = document.createElement('div');
+  leg.className = 'legend';
+  leg.innerHTML =
+    `<span class="leg-item"><span class="leg-dot" style="background:var(--red-bg);border-color:var(--red-bdr);color:var(--red-txt)">0</span> Imposible</span>` +
+    `<span class="leg-item"><span class="leg-dot" style="background:var(--amber-bg);border-color:var(--amber-bdr);color:var(--amber-txt)">1</span> Difícil</span>` +
+    `<span class="leg-item"><span class="leg-dot" style="background:var(--green-bg);border-color:var(--green-bdr);color:var(--green-txt)">2</span> Fácil</span>` +
+    `<span class="leg-item" style="margin-left:auto"><span class="star" style="font-size:11px;color:var(--amber-bdr)">★</span> Ítem sensible en FSHD</span>`;
+  card.appendChild(leg);
+
+  card.addEventListener('click', e => {
+    const btn = e.target.closest('.opt');
+    if (!btn) return;
+    const n = +btn.dataset.n, v = +btn.dataset.v;
+    ans[n] === v ? delete ans[n] : (ans[n] = v);
+    refreshBtns(n);
+    updateResult();
+  });
+}
+
+function refreshBtns(n) {
+  document.querySelectorAll(`.opt[data-n="${n}"]`).forEach(b => {
+    b.className = 'opt';
+    if (ans[n] !== undefined && +b.dataset.v === ans[n]) b.classList.add('s' + ans[n]);
+  });
+}
+
+function updateResult() {
+  const answered = Object.keys(ans).length;
+  const raw = answered > 0 ? Object.values(ans).reduce((a,b)=>a+b,0) : null;
+  const pct = Math.round(answered / 22 * 100);
+
+  document.getElementById('r-count').textContent = answered + ' / 22';
+  document.getElementById('r-fill').style.width = pct + '%';
+  document.getElementById('r-pct').textContent = pct + '%';
+
+  const fshdItems = ITEMS.filter(i => i.fshd && ans[i.n] !== undefined);
+  const fshdSum   = fshdItems.reduce((a,i) => a + ans[i.n], 0);
+  document.getElementById('r-fshd').textContent = fshdItems.length + ' / 6';
+  document.getElementById('r-fshd-sum').textContent = fshdItems.length > 0
+    ? 'Suma ★: ' + fshdSum + '/' + (fshdItems.length * 2) : '';
+
+  const interp = document.getElementById('r-interp');
+  if (answered < 18) {
+    document.getElementById('r-raw').textContent = raw !== null ? raw : '—';
+    document.getElementById('r-logit').textContent = '—';
+    document.getElementById('r-logit').className = 'result-val';
+    interp.className = 'interp-bar i-nc';
+    interp.textContent = 'Faltan ' + (22 - answered) + ' ítems (mínimo 18 para calcular)';
+    return;
+  }
+
+  const scaledIdx = answered < 22
+    ? Math.min(Math.round(raw / (answered * 2) * 44), CONV.length - 1)
+    : Math.min(raw, CONV.length - 1);
+
+  const [logit, interpTxt] = CONV[scaledIdx];
+  document.getElementById('r-raw').textContent = raw + (answered < 22 ? '*' : '');
+  const le = document.getElementById('r-logit');
+  le.textContent = (logit >= 0 ? '+' : '') + logit.toFixed(2);
+  le.className = 'result-val ' + (logit >= 0 ? 'pos' : 'neg');
+
+  interp.className = 'interp-bar ' + (ICLASS[interpTxt] || 'i-nc');
+  interp.textContent = interpTxt + (answered < 22 ? '  (ajustado por ítems faltantes)' : '');
+
+  highlightConvRow(scaledIdx);
+}
+
+function resetAll() {
+  Object.keys(ans).forEach(k => delete ans[k]);
+  ITEMS.forEach(i => document.querySelectorAll(`.opt[data-n="${i.n}"]`).forEach(b => b.className = 'opt'));
+  ['pNombre','pFecha','pHC'].forEach(id => document.getElementById(id).value = '');
+  updateResult();
+  highlightConvRow(-1);
+}
+
+function buildConvTable() {
+  const tbl = document.getElementById('conv-tbl');
+  tbl.innerHTML =
+    `<thead><tr><th>Suma</th><th>Logit</th><th style="text-align:left">Interpretación</th></tr></thead>`;
+  const tbody = document.createElement('tbody');
+  CONV.forEach(([logit, interp], i) => {
+    const tr = document.createElement('tr');
+    tr.id = 'cr-' + i;
+    tr.innerHTML =
+      `<td>${i}</td>` +
+      `<td>${(logit >= 0 ? '+' : '') + logit.toFixed(2)}</td>` +
+      `<td class="td-int">${interp}</td>`;
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+}
+
+function highlightConvRow(idx) {
+  document.querySelectorAll('.conv-table tr.hl').forEach(r => r.classList.remove('hl'));
+  if (idx >= 0) {
+    const row = document.getElementById('cr-' + idx);
+    if (row) row.classList.add('hl');
+  }
+}
+
+function toggleConv(btn) {
+  const wrap = document.getElementById('conv-wrap');
+  const arrow = document.getElementById('conv-arrow');
+  wrap.classList.toggle('open');
+  arrow.textContent = wrap.classList.contains('open') ? '▲' : '▼';
+}
+
+buildItems();
+buildConvTable();
+updateResult();
+</script>
+</body>
+</html>
